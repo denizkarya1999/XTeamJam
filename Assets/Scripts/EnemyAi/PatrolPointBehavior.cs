@@ -15,22 +15,55 @@ public class PatrolPointBehavior : MonoBehaviour
 
     public float waitTime = 4.0f;
 
-    private ActionStatus status = ActionStatus.NOT_STARTED;
-    private float accumulatedWaitTime = 0.0f;
+    protected ActionStatus status = ActionStatus.NOT_STARTED;
+    protected float accumulatedWaitTime = 0.0f;
 
     // Start is called before the first frame update
-    void Start()
+    protected virtual void Start()
     {
         //Disabled by default. Activates when started. For performance so patrol points aren't ticking all the time
         enabled = false;
     }
 
     // Update is called once per frame
-    void Update()
+    protected virtual void Update()
     {
+        ExecuteAction();
 
+    }
+
+    public void InterruptAction()
+    {
+        ResetAction();
+    }
+
+    // Function called by the patrolling character. Will be called periodically. Kicks off and completes the behavior or will just say it's in progress.
+    public ActionStatus DoPointReached()
+    {
+        if (status == ActionStatus.COMPLETE || status == ActionStatus.ERROR)
+        {
+            ActionStatus returnStatus = status;
+            ResetAction(); //Resets so ready to run again later.
+            return returnStatus; //Returning so the caller knows the action just ended.
+        }
+
+        // Kick off the action.
+        if (status == ActionStatus.NOT_STARTED)
+        {
+
+            status = ActionStatus.STARTED;
+            enabled = true;
+            return status;
+        }
+
+        // Other states changed through the actual update behavior for the object
+        return status;
+    }
+
+    protected virtual void ExecuteAction()
+    {
         //Default behavior to just wait around at the patrol point. Doing nothing interesting.
-        switch(status)
+        switch (status)
         {
             case ActionStatus.NOT_STARTED:
             case ActionStatus.COMPLETE:
@@ -43,7 +76,7 @@ public class PatrolPointBehavior : MonoBehaviour
                 break;
             case ActionStatus.IN_PROGRESS:
                 accumulatedWaitTime += Time.deltaTime;
-                if(accumulatedWaitTime > waitTime)
+                if (accumulatedWaitTime > waitTime)
                 {
                     status = ActionStatus.COMPLETE;
                 }
@@ -53,29 +86,6 @@ public class PatrolPointBehavior : MonoBehaviour
                 status = ActionStatus.ERROR;
                 break;
         }
-    }
-
-    // Function called by the patrolling character. Will be called periodically. Kicks off and completes the behavior or will just say it's in progress.
-    public virtual ActionStatus DoPatrolReached()
-    {
-        if(status == ActionStatus.COMPLETE || status == ActionStatus.ERROR)
-        {
-            ActionStatus returnStatus = status;
-            ResetAction(); //Resets so ready to run again later.
-            return returnStatus; //Returning so the caller knows the action just ended.
-        }
-
-        // Kick off the action.
-        if(status == ActionStatus.NOT_STARTED)
-        {
-            
-            status = ActionStatus.STARTED;
-            enabled = true;
-            return status;
-        }
-
-        // Other states changed through the actual update behavior for the object
-        return status;
     }
 
     private void ResetAction()
